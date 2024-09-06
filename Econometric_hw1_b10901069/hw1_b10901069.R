@@ -10,6 +10,10 @@ TimeSerie <- function(X, yLab){
   return(plot(TimeMatrix, X , type = "l", col = rgb(0, 0, 1), xlab = "Time", ylab = yLab, main = "Time Serie of X's column"))
 }
 
+Histogram <- function(X, FigureName){
+  hist(X, probability = TRUE, main = FigureName, xlab = "Values", col = rgb(0.1, 0.3, 0.4, 0.5), border = "white", breaks = 20)
+}
+
 #X's Time Series Plot
 for(i in 1:ncol(XMatrix)) 
 {
@@ -19,10 +23,14 @@ for(i in 1:ncol(XMatrix))
 }
 
 #X's Histogram
-png(paste("X_Histogram.png"))
-hist(XMatrix, probability = TRUE, main = "Histogram of X", xlab = "Values", col = rgb(0.1, 0.3, 0.4, 0.5), border = "white", breaks = 20)
-lines(density(rnorm(5544)), col = rgb(0.7, 0.1, 0.1, 0.7), lwd = 1.5)
-dev.off()
+for(i in 1:ncol(XMatrix)) 
+{
+  png(paste(colnames(XMatrix)[i], "_Histogram.png", sep = ""))
+  Histogram(XMatrix[, i], colnames(XMatrix)[i])
+  #lines(density(rnorm(504)), col = rgb(0.7, 0.1, 0.1, 0.7), lwd = 1.5)
+  lines(density(XMatrix[, i],), col = rgb(0.7, 0.1, 0.1, 0.7), lwd = 1.5)
+  dev.off()
+}
 
 #Y's Time Series Plot
 png(paste(colnames(YMatrix), "_TimeSeriesPlot.png", sep = ""))
@@ -30,9 +38,10 @@ TimeSeriesPlot(YMatrix, colnames(YMatrix))
 dev.off()
 
 #Y's Histogram
+
 png(paste("Y_Histogram.png"))
-hist(YMatrix, probability = TRUE, main = "Histogram of Y", xlab = "Values", col = rgb(0.1, 0.3, 0.4, 0.5), border = "white", breaks = 20)
-lines(density(rnorm(504)), col = rgb(0.7, 0.1, 0.1, 0.7), lwd = 1.5)
+Histogram(YMatrix, colnames(YMatrix))
+lines(density(YMatrix), col = rgb(0.7, 0.1, 0.1, 0.7), lwd = 1.5)
 dev.off()
 
 #-------------------- Problem 2 --------------------
@@ -52,11 +61,24 @@ print(TraceOfMatrix_2_2)
 
 eigenX <- eigen(t(XMatrix) %*% XMatrix)
 print(eigenX$values)
-png(paste("ScreePlot.png"))
+png(paste("ScreePlot_Problem3.png"))
 plot(1:11, eigenX$values, type = "l", col = rgb(0, 0, 1), xlab = "j", ylab = "eigenvalue", main = "Scree Plot")
 dev.off()
 
+#-------------------- Problem 4 --------------------
 
+Standardized_X <- scale(XMatrix)
+eigen_4_1 <- eigen(t(Standardized_X) %*% Standardized_X)
+eigen_4_2 <- eigen(Standardized_X %*% t(Standardized_X))
+
+png(paste("ScreePlot_Problem4.png"), width = 800, height = 400)
+
+layout(matrix(c(1, 2), 1, 2, byrow = TRUE), widths = c(1, 1))
+
+plot(1:11, eigen_4_1$values, type = "l", col = rgb(0, 0, 1), xlab = "j", ylab = "eigenvalue", main = "Scree Plot 1", pch = 16)
+plot(1:504, eigen_4_2$values, type = "l", col = rgb(1, 0, 0), xlab = "j", ylab = "eigenvalue", main = "Scree Plot 2", pch = 16)
+
+dev.off()
 
 
 
