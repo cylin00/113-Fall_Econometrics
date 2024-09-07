@@ -84,8 +84,17 @@ EigenA <- eigen(MatrixA)
 P <- EigenA$vectors
 D <- diag(EigenA$values)
 A_Reconstructed <- P %*% D %*% solve(P)
+all.equal(MatrixA, A_Reconstructed, tolerance = 1e-6, check.attributes = FALSE)
 
-print(A_Reconstructed %*% solve(A_Reconstructed))
+Matrix_5 <- A_Reconstructed %*% solve(A_Reconstructed)
+all.equal(Matrix_5, diag(11), tolerance = 1e-6, check.attributes = FALSE)
+
+#-------------------- Problem 6 --------------------
+
+
+
+
+
 
 
 
