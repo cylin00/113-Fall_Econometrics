@@ -90,13 +90,5 @@ Matrix_5 <- A_Reconstructed %*% solve(A_Reconstructed)
 all.equal(Matrix_5, diag(11), tolerance = 1e-6, check.attributes = FALSE)
 
 #-------------------- Problem 6 --------------------
-
-
-
-
-
-
-
-
-
-
+MatrixB <- MatrixA %*% t(Standardized_X) %*% YMatrix
+print(MatrixB)
