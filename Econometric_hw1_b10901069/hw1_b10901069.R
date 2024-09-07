@@ -72,13 +72,21 @@ eigen_4_1 <- eigen(t(Standardized_X) %*% Standardized_X)
 eigen_4_2 <- eigen(Standardized_X %*% t(Standardized_X))
 
 png(paste("ScreePlot_Problem4.png"), width = 800, height = 400)
-
 layout(matrix(c(1, 2), 1, 2, byrow = TRUE), widths = c(1, 1))
-
 plot(1:11, eigen_4_1$values, type = "l", col = rgb(0, 0, 1), xlab = "j", ylab = "eigenvalue", main = "Scree Plot 1", pch = 16)
 plot(1:504, eigen_4_2$values, type = "l", col = rgb(1, 0, 0), xlab = "j", ylab = "eigenvalue", main = "Scree Plot 2", pch = 16)
-
 dev.off()
+
+#-------------------- Problem 5 --------------------
+
+MatrixA <- solve(t(Standardized_X) %*% Standardized_X)
+EigenA <- eigen(MatrixA)
+P <- EigenA$vectors
+D <- diag(EigenA$values)
+A_Reconstructed <- P %*% D %*% solve(P)
+
+print(A_Reconstructed %*% solve(A_Reconstructed))
+
 
 
 
