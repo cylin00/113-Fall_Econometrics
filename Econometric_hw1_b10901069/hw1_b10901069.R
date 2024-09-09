@@ -6,19 +6,21 @@ XMatrix <- Matrix[, -c(1, 2), drop = FALSE]
 
 #-------------------- Problem 1 --------------------
 
-TimeSerie <- function(X, yLab){
-  return(plot(TimeMatrix, X , type = "l", col = rgb(0, 0, 1), xlab = "Time", ylab = yLab, main = "Time Serie of X's column"))
+TimeSeries <- function(X, yLab){
+  return(plot(TimeMatrix, X , type = "l", col = rgb(0, 0, 1), xlab = "Time",
+              ylab = yLab, main = paste("TimeSeries of ", yLab)))
 }
 
 Histogram <- function(X, FigureName){
-  hist(X, probability = TRUE, main = FigureName, xlab = "Values", col = rgb(0.1, 0.3, 0.4, 0.5), border = "white", breaks = 20)
+  return(hist(X, probability = TRUE, main = FigureName, xlab = "Values", 
+              col = rgb(0.1, 0.3, 0.4, 0.5), border = "white", breaks = 20))
 }
 
 #X's Time Series Plot
 for(i in 1:ncol(XMatrix)) 
 {
   png(paste(colnames(XMatrix)[i], "_TimeSeriesPlot.png", sep = ""))
-  TimeSeriesPlot(XMatrix[, i], colnames(XMatrix)[i])
+  TimeSeries(XMatrix[, i], colnames(XMatrix)[i])
   dev.off()
 }
 
@@ -34,7 +36,7 @@ for(i in 1:ncol(XMatrix))
 
 #Y's Time Series Plot
 png(paste(colnames(YMatrix), "_TimeSeriesPlot.png", sep = ""))
-TimeSeriesPlot(YMatrix, colnames(YMatrix))
+TimeSeries(YMatrix, colnames(YMatrix))
 dev.off()
 
 #Y's Histogram
