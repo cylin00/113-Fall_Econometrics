@@ -68,5 +68,13 @@ print(round(b22, 3))
 print(round(g1, 3))
 print(round(g2, 3))
 
+# ----------------------- Problem 6 -----------------------
 
+library(MASS) 
+n <- 10000
 
+tX <- rt(n, df = 3)
+tY <- 1 / (1 + tX^4)
+beta <- cov(tX, tY)/3
+
+print(beta)
