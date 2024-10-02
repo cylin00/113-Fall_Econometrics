@@ -37,10 +37,9 @@ print(Beta)
 
 # ------------------------ Problem 4. ------------------------
 
-Y_average <- mean(Y)
 TSS <- 0
 for(i in 1:504){
-  TSS <- TSS + (Y[i] - Y_average)^2
+  TSS <- TSS + (Y[i] - mean(Y))^2
 }
 print(TSS)
   
@@ -61,7 +60,7 @@ for(j in 1:7){
   RSS <- 0
   Y_hat <- XList[[j]] %*% Beta_X(XList[[j]])
   for(i in 1:504){
-    RSS <- RSS + ((Y_hat[i]) - Y_average)^2
+    RSS <- RSS + ((Y_hat[i]) - mean(Y))^2
   }
   print(paste("R-squared for X(i, ", j, ") = ", RSS/TSS, sep = ""))
 }
