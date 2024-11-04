@@ -28,7 +28,7 @@ UpdateName <- function(coef){
 
 model <- lm(Y ~ X-1)
 beta <- model$coefficients
-print(beta)
+print(UpdateName(beta))
 
 s <- summary(model)$sigma
 
@@ -62,20 +62,34 @@ print(result_df)
 
 # ------------------------ Problem 3 ------------------------
 
+# 3 - (a)
+
 variance_hat <- sum(resid(model)^2) / length(resid(model))
 std_hat <- sqrt(variance_hat)
-std_hat
+sk_hat <- sum((resid(model) / std_hat)^3) / length(resid(model))
+kr_hat <- sum((resid(model) / std_hat)^4) / length(resid(model))
 
-sk <- skewness(resid(model))
-kr <- kurtosis(resid(model))
-JB <- length(resid(model)) * ((sk^2 / 6) + ((kr - 3)^2 / 24))
+JB <- length(resid(model)) * ((sk_hat^2 / 6) + ((kr_hat - 3)^2 / 24))
 print(JB)
 
+chi_1 <- qchisq(1 - 0.01, 2)  # alpha = 1%
+chi_5 <- qchisq(1 - 0.05, 2)  # alpha = 5%
+chi_10 <- qchisq(1 - 0.10, 2)  # alpha = 10%
 
+print(paste("Significant at 1% level:", JB > chi_1))
+print(paste("Significant at 5% level:", JB > chi_5))
+print(paste("Significant at 10% level:", JB > chi_10))
 
+# 3 - (b)
 
+standardized_residuals <- resid(model) / std_hat
+density_res <- density(standardized_residuals)
 
+plot(density_res, main = "Kernel Density vs N(0,1)", xlim = c(-6, 6))
 
+curve(dnorm(x), col = "red", add = TRUE)
+
+legend("topright", legend = c("Kernel Density", "N(0,1)"), col = c("black", "red"), lty = 1)
 
 
 
