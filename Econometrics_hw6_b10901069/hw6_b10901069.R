@@ -115,3 +115,61 @@ Simulate_Scaled(n3, rep)
 # -------------------- Problem 2 --------------------
 
 Data <- read.csv("Equity_Premium.csv")
+Matrix <- as.matrix(Data)
+Y <- Matrix[, 2, drop = FALSE]
+X1 <- matrix(1, nrow = nrow(Y), ncol = 1)
+X_dfy <- Matrix[, 3, drop = FALSE]
+X_infl <- Matrix[, 4, drop = FALSE]
+X_svar <- Matrix[, 5, drop = FALSE]
+X_tms <- Matrix[, 6, drop = FALSE]
+X_tbl <- Matrix[, 7, drop = FALSE]
+X_dfr <- Matrix[, 8, drop = FALSE]
+X_db <- Matrix[, 9, drop = FALSE]
+X_ltr <- Matrix[, 10, drop = FALSE]
+X_ep <- Matrix[, 11, drop = FALSE]
+X_bmr <- Matrix[, 12, drop = FALSE]
+X_ntis <- Matrix[, 13, drop = FALSE]
+X <- cbind(X1, X_dfy, X_infl, X_svar, X_tms, X_tbl, X_dfr, X_db, X_ltr, X_ep, X_bmr, X_ntis)
+
+#
+
+UpdateName <- function(coef){
+  new_names <- names(coef)
+  new_names[1] <- "constant"  
+  new_names <- sub("^Xx_", "x_", new_names) 
+  new_names <- sub("^X", "", new_names) 
+  names(coef) <- new_names
+  
+  return(coef)
+}
+
+#
+
+ChangeName <- function(summary_table) {
+  new_names <- paste0(seq_len(nrow(summary_table)))
+  rownames(summary_table) <- new_names
+  return(summary_table)
+}
+
+#
+
+library(car)
+alpha = 0.05
+
+UpdatedX <- t(ChangeName(t(X)))
+model <- lm(Y ~ (UpdatedX - 1))
+coef <- summary(model)$coefficients
+
+test <- data.frame(p_value = coef[, "Pr(>|t|)"])
+test$GreaterThanAlpha <- test$p_value > alpha
+test
+
+
+
+c1 <- "UpdatedX1 = 0"
+c2 <- "UpdatedX2 + UpdatedX3 = 0"
+constraints <- c(c1, c2)
+wald <- linearHypothesis(model, constraints, level = alpha)
+wald
+
+
