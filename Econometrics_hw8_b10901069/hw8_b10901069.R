@@ -1,4 +1,5 @@
 # ------------------------------------------------
+rm(list = ls())
 
 Data <- read.csv("Equity_Premium.csv")
 Matrix <- as.matrix(Data)
@@ -24,8 +25,8 @@ n <- nrow(Y)
 k <- ncol(X)
 model_indices <- expand.grid(rep(list(c(FALSE, TRUE)), k))
 num_models <- nrow(model_indices)
+predictor_indices <- vector("list", length(num_models))
 
-# Storage for model selection criteria
 criteria <- data.frame(CenteredR2 = numeric(num_models),
                        AdjustedR2 = numeric(num_models),
                        AIC = numeric(num_models),
@@ -33,46 +34,41 @@ criteria <- data.frame(CenteredR2 = numeric(num_models),
                        Cp = numeric(num_models),
                        LOOCV = numeric(num_models))
 
+num_predictors <- vector("list", length(num_models))
 
-for (i in 1:num_models) {
+for (i in 2:num_models) {
   
-  if (sum(model_indices[i, ]) == 0) {
-    next  # Skip this iteration if no predictors are selected
-  }
+  predictor_indices[[i]] <- which(as.logical(model_indices[i, ]))
   
-  # Convert row of model_indices to logical vector for subsetting
   predictors <- X[, which(as.logical(model_indices[i, ])), drop = FALSE]
   
-  # Fit the model
-  model <- lm(Y ~ predictors - 1)  # Fit model without intercept (centered)
+  num_predictors[i] <- sum(model_indices[i, ])
   
-  # Calculate metrics
+  model <- lm(Y ~ predictors - 1)
+
   criteria$CenteredR2[i] <- summary(model)$r.squared
   criteria$AdjustedR2[i] <- summary(model)$adj.r.squared
   criteria$AIC[i] <- AIC(model)
   criteria$BIC[i] <- BIC(model)
-  criteria$Cp[i] <- sum(residuals(model)^2) / var(residuals(model))  # Simplified Mallows' Cp
-  criteria$LOOCV[i] <- mean((residuals(model) / (1 - lm.influence(model)$hat))^2)  # LOO-CV
+  criteria$Cp[i] <- sum(residuals(model)^2) / var(residuals(model))  # ******
+  criteria$LOOCV[i] <- mean((residuals(model) / (1 - lm.influence(model)$hat))^2)  # ******
+  
 }
 
-# Identify best models
+# Now we modify the best_models list to select the second minimum for Cp and LOOCV
 best_models <- list(
   CenteredR2 = which.max(criteria$CenteredR2),
   AdjustedR2 = which.max(criteria$AdjustedR2),
   AIC = which.min(criteria$AIC),
   BIC = which.min(criteria$BIC),
-  Cp = which.min(criteria$Cp),
-  LOOCV = which.min(criteria$LOOCV)
+  Cp = order(criteria$Cp),
+  LOOCV = order(criteria$LOOCV)
 )
 
+best_models
 
-pdf("plot.pdf", width = 7, height = 5)
-plot(criteria$CenteredR2, main = "Centered R2", ylab = "R2", cex = 0.5, pch = 16)
-plot(criteria$AdjustedR2, main = "Adjusted R2", ylab = "Adj R2", cex = 0.5, pch = 16)
-plot(criteria$AIC, main = "AIC", ylab = "AIC", cex = 0.5, pch = 16)
-plot(criteria$BIC, main = "BIC", ylab = "BIC", cex = 0.5, pch = 16)
-plot(criteria$Cp, main = "Mallows' Cp", ylab = "Cp", cex = 0.5, pch = 16)
-plot(criteria$LOOCV, main = "LOO-CV", ylab = "LOO Error", cex = 0.5, pch = 16)
-dev.off()  
+p <- c(best_models$CenteredR2, best_models$AdjustedR2, best_models$AIC, best_models$BIC, best_models$Cp, best_models$LOOCV)
+for (i in 1:length(p)) {
+  print(paste("Model", i, "uses", num_predictors[p[i]], "predictors:", paste(colnames(X)[predictor_indices[[p[i]]]], collapse = ", ")))
+}
 
-print(best_models)
