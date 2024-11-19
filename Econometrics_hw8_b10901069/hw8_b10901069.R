@@ -1,4 +1,3 @@
-# ------------------------------------------------
 rm(list = ls())
 
 Data <- read.csv("Equity_Premium.csv")
@@ -25,7 +24,7 @@ n <- nrow(Y)
 k <- ncol(X)
 model_indices <- expand.grid(rep(list(c(FALSE, TRUE)), k))
 num_models <- nrow(model_indices)
-predictor_indices <- vector("list", length(num_models))
+predictor_indices <- vector("list", length = num_models)
 
 criteria <- data.frame(CenteredR2 = numeric(num_models),
                        AdjustedR2 = numeric(num_models),
@@ -34,41 +33,93 @@ criteria <- data.frame(CenteredR2 = numeric(num_models),
                        Cp = numeric(num_models),
                        LOOCV = numeric(num_models))
 
-num_predictors <- vector("list", length(num_models))
+num_predictors <- numeric(num_models)
 
-for (i in 2:num_models) {
+full_model <- lm(Y ~ X - 1)
+full_sigma2 <- sum(residuals(full_model)^2) / (n - k)
+
+for (i in 1:num_models) {
   
   predictor_indices[[i]] <- which(as.logical(model_indices[i, ]))
   
-  predictors <- X[, which(as.logical(model_indices[i, ])), drop = FALSE]
+  if (length(predictor_indices[[i]]) == 0) {
+    num_predictors[i] <- 0
+    next
+  }
+  
+  predictors <- X[, predictor_indices[[i]], drop = FALSE]
   
   num_predictors[i] <- sum(model_indices[i, ])
   
   model <- lm(Y ~ predictors - 1)
-
+  
+  ESS <- sum(residuals(model)^2)
+  H <- predictors %*% solve(t(predictors) %*% predictors) %*% t(predictors)
+  h_ii <- diag(H)
+  
   criteria$CenteredR2[i] <- summary(model)$r.squared
   criteria$AdjustedR2[i] <- summary(model)$adj.r.squared
   criteria$AIC[i] <- AIC(model)
   criteria$BIC[i] <- BIC(model)
-  criteria$Cp[i] <- sum(residuals(model)^2) / var(residuals(model))  # ******
-  criteria$LOOCV[i] <- mean((residuals(model) / (1 - lm.influence(model)$hat))^2)  # ******
-  
+  criteria$Cp[i] <- ESS / full_sigma2 + 2 * num_predictors[i] - n 
+  criteria$LOOCV[i] <- mean((residuals(model) / (1 - h_ii))^2) 
 }
 
-# Now we modify the best_models list to select the second minimum for Cp and LOOCV
+valid_indices <- which(num_predictors > 0)
+
 best_models <- list(
-  CenteredR2 = which.max(criteria$CenteredR2),
-  AdjustedR2 = which.max(criteria$AdjustedR2),
-  AIC = which.min(criteria$AIC),
-  BIC = which.min(criteria$BIC),
-  Cp = order(criteria$Cp),
-  LOOCV = order(criteria$LOOCV)
+  CenteredR2 = valid_indices[which.max(criteria$CenteredR2[valid_indices])],
+  AdjustedR2 = valid_indices[which.max(criteria$AdjustedR2[valid_indices])],
+  AIC = valid_indices[which.min(criteria$AIC[valid_indices])],
+  BIC = valid_indices[which.min(criteria$BIC[valid_indices])],
+  Cp = valid_indices[which.min(criteria$Cp[valid_indices])],
+  LOOCV = valid_indices[which.min(criteria$LOOCV[valid_indices])]
 )
 
-best_models
-
-p <- c(best_models$CenteredR2, best_models$AdjustedR2, best_models$AIC, best_models$BIC, best_models$Cp, best_models$LOOCV)
-for (i in 1:length(p)) {
-  print(paste("Model", i, "uses", num_predictors[p[i]], "predictors:", paste(colnames(X)[predictor_indices[[p[i]]]], collapse = ", ")))
+# 印出最佳模型資訊
+for (i in seq_along(best_models)) {
+  idx <- best_models[[i]]
+  cat("\nBest model for", names(best_models)[i], ":\n")
+  cat("Number of predictors:", num_predictors[idx], "\n")
+  cat("Predictors:", paste(colnames(X)[predictor_indices[[idx]]], collapse = ", "), "\n")
 }
+
+valid_indices <- which(num_predictors > 0)  
+valid_criteria <- criteria[valid_indices, ]  
+valid_num_predictors <- num_predictors[valid_indices] 
+
+criteria_names <- c("CenteredR2", "AdjustedR2", "AIC", "BIC", "Cp", "LOOCV")
+for (crit_name in criteria_names) {
+  png(filename = paste0(crit_name, "_plot.png"), width = 1000, height = 600)
+  
+  par(mar = c(4.5, 4.5, 3, 1))
+  
+  y_values <- valid_criteria[[crit_name]]  
+  
+  if (crit_name %in% c("CenteredR2", "AdjustedR2")) {
+    best_idx <- which.max(y_values)
+    highlight = "red"
+  } else {
+    best_idx <- which.min(y_values)
+    highlight = "blue"
+  }
+  
+  plot(valid_num_predictors, y_values, 
+       main = paste(crit_name, "vs Number of Predictors"),
+       xlab = "Number of Predictors", ylab = crit_name,
+       pch = 16, col = "gray", cex = 1.2)
+  
+  points(valid_num_predictors[best_idx], y_values[best_idx], 
+         col = highlight, pch = 16, cex = 2)
+  points(valid_num_predictors[best_idx], y_values[best_idx], 
+         col = highlight, pch = 1, cex = 3)
+  
+  legend("topright", 
+         legend = c("Models", paste("Best model (", valid_num_predictors[best_idx], " predictors)", sep = "")),
+         pch = c(16, 16), col = c("gray", highlight), pt.cex = c(1, 2), bg = "white")
+  
+  dev.off()
+}
+
+
 
